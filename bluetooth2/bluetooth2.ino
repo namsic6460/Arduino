@@ -1,10 +1,24 @@
 #include <SoftwareSerial.h>
+#include <DHT.h>
 
-#define CDS A0
 #define ECHO 12
 #define TRIG 13
 
 SoftwareSerial BTSerial(2, 3);
+DHT dht(A1, DHT11);
+
+int getDistance() {
+  digitalWrite(TRIG, LOW);
+  digitalWrite(ECHO, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
+
+  unsigned long duration = pulseIn(ECHO, HIGH);
+  double distance = (340.0 * duration) / 20000;
+  return distance > 255 ? 255 : (int) distance;
+}
 
 void setup(){
   Serial.begin(9600);
@@ -14,32 +28,69 @@ void setup(){
   pinMode(TRIG, OUTPUT);
 }
 
-double getDistance() {
-  digitalWrite(TRIG, LOW);
-  digitalWrite(ECHO, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIG, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIG, LOW);
-
-  unsigned long duration = pulseIn(ECHO, HIGH);
-  return (340.0 * duration) / 20000;
-}
- 
+boolean isSerial = false;
 void loop(){
-  double distance = getDistance();
-  distance = distance > 255 ? 255 : distance < 2 ? 2 : distance;
-  int type = 0;
+  if(Serial.available()) {    
+    byte input = Serial.read();
+    if(input == (byte) '-') {
+      return;
+    }
     
-  BTSerial.write(type);
-  BTSerial.write(distance);
-  
-  int cds = analogRead(CDS) / 4;
-  cds = cds < 2 ? 2 : cds;
-  type = 1;
-  BTSerial.write(type);
-  BTSerial.write(cds);
-  Serial.println(cds);
+    isSerial = true;
+    BTSerial.write(input);
+  } else if(isSerial) {
+    BTSerial.write((byte) '-');
 
-  delay(100);
+    int distance = getDistance();
+    char hun = distance / 100 + '0';
+    char ten = distance / 10 % 10 + '0';
+    char one = distance % 10 + '0';
+
+    if(distance >= 100) {
+      BTSerial.write((byte) hun);
+    }
+    
+    if(distance >= 10) {
+      BTSerial.write((byte) ten);
+    }
+    
+    BTSerial.write((byte) one);
+    BTSerial.write((byte) '-');
+
+    int humi = dht.readHumidity();
+    ten = humi / 10 + '0';
+    one = humi % 10 + '0';
+
+    if(humi >= 10) {
+      BTSerial.write((byte) ten);
+    }
+
+    BTSerial.write((byte) one);
+    BTSerial.write((byte) '-');
+    
+    int temp = dht.readTemperature();
+    ten = temp / 10 + '0';
+    one = temp % 10 + '0';
+
+    if(temp >= 10) {
+      BTSerial.write((byte) ten);
+    }
+
+    BTSerial.write((byte) one);
+    BTSerial.write((byte) '-');
+    
+    isSerial = false;
+  }
+
+  if(BTSerial.available()) {
+    byte input;
+    
+    input = BTSerial.read();
+
+    if(input != ((byte) '-')) {
+      Serial.print((char) input);
+    } else {
+      Serial.println();
+    }    
+  }
 }
