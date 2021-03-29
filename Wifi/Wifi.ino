@@ -4,7 +4,7 @@ SoftwareSerial sSerial(2, 3);
 
 void setup() {
   Serial.begin(9600);
-  sSerial.begin(57600);
+  sSerial.begin(9600);
   sSerial.setTimeout(5000);
 }
 

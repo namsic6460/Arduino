@@ -4,13 +4,12 @@
 SoftwareSerial Serial1(2, 3); // RX, TX
 #endif
 
-char ssid[] = "iptime3";            // your network SSID (name)
-char pass[] = "classno3";        // your network password
-int status = WL_IDLE_STATUS;     // the Wifi radio's status
-int reqCount = 0;                // number of requests received
+char ssid[] = "iptime3";
+char pass[] = "classno3";
+int status = WL_IDLE_STATUS;
+int reqCount = 0;
 
 WiFiEspServer server(80);
-
 
 void setup()
 {
@@ -33,40 +32,45 @@ void setup()
 
   Serial.println("You're connected to the network");
   printWifiStatus();
-  
+
   server.begin();
 }
 
-
+String inputString = "";
 void loop()
 {
   WiFiEspClient client = server.available();
   if (client) {
     Serial.println("New client");
-    
+
     while (client.connected()) {
       if (client.available()) {
-        if(Serial.available()) {
-          String inputString = "";
+        char input = client.read();
+        Serial.write(input);
+        delayMicroseconds(50);
 
-          byte input;
-          while(Serial.available()) {
-            input = Serial.read();
-            inputString += (char) input;
-
-            delay(2);
+        if(input == '\n') {
+          if(inputString.substring(0, 3).equals("H: ") &&
+             inputString.substring(5, 10).equals(", T: ")) {
+            client.write("DHT OK\n");
+          } else if(inputString.substring(4, 6).equals(", ") &&
+             inputString.substring(10, 12).equals(", ")) {
+            client.write("JoyStick OK\n");
+          } else {
+            client.write("ERROR\n");
           }
-
-          Serial.print(inputString);
-          client.print(inputString);
+          
+          inputString = "";
+        } else {
+          inputString += input;
         }
       }
     }
-    
+
     delay(10);
 
-//    client.stop();
-//    Serial.println("Client disconnected");
+    client.stop();
+    Serial.println("Client disconnected");
   }
 }
 
@@ -79,7 +83,7 @@ void printWifiStatus()
   IPAddress ip = WiFi.localIP();
   Serial.print("IP Address: ");
   Serial.println(ip);
-  
+
   Serial.println();
   Serial.print("To see this page in action, open a browser to http://");
   Serial.println(ip);
