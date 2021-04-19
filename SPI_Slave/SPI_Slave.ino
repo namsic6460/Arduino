@@ -1,4 +1,7 @@
 #include <SPI.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 void setup() {
 //  SPI.begin();
@@ -14,18 +17,42 @@ void setup() {
   SPI.setClockDivider(SPI_CLOCK_DIV16);
 
   Serial.begin(9600);
+  lcd.begin();
+
+  Serial.println("Started!");
 }
 
-int B = 0;
+unsigned long prevMilli = 0;
+unsigned long currMilli;
+String text = "";
+boolean changed = false;
 
 ISR(SPI_STC_vect) {
-  byte confirm = SPDR;
+  currMilli = millis();
+  if(currMilli - prevMilli >= 1000) {
+    text = "";
+    changed = true;
+  }
 
-  Serial.print((char) confirm);
+  prevMilli = currMilli;
+  char confirm = (char) SPDR;
 
-  SPDR = B;
+  if(confirm != 10) {
+    text += confirm;
+  }
+  
+  Serial.print(confirm);
 }
 
 void loop() {
-  B++;
+  if(changed) {
+    lcd.clear();
+  }
+  
+  lcd.setCursor(0, 0);
+  lcd.print(text.substring(0, 16));
+  lcd.setCursor(0, 1);
+  lcd.print(text.substring(16, 32));
+  
+  delay(1000);
 }
