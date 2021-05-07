@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>HOME NETWORK</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>HOME IoT</h2>
+        </div>
+        <div class="main">
+            <div>
+                <button onclick="led('r', 'on')">R ON</button>
+            </div>
+            <div>
+                <button onclick="led('r', 'off')">R OFF</button>
+            </div>
+        </div>
+        <div class="main">
+            <div>
+                <button onclick="led('g', 'on')">G ON</button>
+            </div>
+            <div>
+                <button onclick="led('g', 'off')">G OFF</button>
+            </div>
+        </div>
+        <div class="main">
+            <div>
+                <button onclick="led('b', 'on')">B ON</button>
+            </div>
+            <div>
+                <button onclick="led('b', 'off')">B OFF</button>
+            </div>
+        </div>
+        <div id="result_r">
+
+        </div>
+        <div id="result_g">
+
+        </div>
+        <div id="result_b">
+
+        </div>
+    </div>
+    <script>
+        function led(color, state){
+			let str = "/led?";
+			
+			if(color === "r") str += "r=" + state;
+			else if(color === "g") str += "g=" + state;
+			else if(color === "b") str += "b=" + state;
+			
+            fetch(str)
+            .then(response=> {
+				return response.text()
+			})
+			.then(data=> {
+                let result = document.querySelector("#result_" + color);
+                
+                if(data=="ok"){
+                    result.innerHTML = "<h1>" + color.toUpperCase() + " LED is " + state.toUpperCate() + "</h1>";
+                }else{
+                    result.innerHTML = "<h1>error</h1>";
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Humi Temp</title>
+</head>
+<body>
+    <div>
+        <button onclick="show()">show</button>
+    </div>
+    <div>
+        <button onclick="hide()">hide</button>
+    </div>
+    <div id="result_humi">
+
+    </div>
+    <div id="result_temp">
+    
+    </div>
+    
+    <script>
+        function show() {
+            fetch("/getHumiTemp")
+            .then(response=> {
+                console.log(response);
+                return response.text();
+            })
+            .then(data=> {
+                let split = data.split(",");
+                let humi = split[0];
+                let temp = split[1];
+                
+                document.querySelector("#result_humi").innerHTML = "<h1>Humidity: " + humi + "</h1>";
+                document.querySelector("#result_temp").innerHTML = "<h1>Temperature: " + temp + "</h1>";
+            });
+        }
+        
+        function hide() {
+            document.querySelector("#result_humi").innerHTML = "";
+            document.querySelector("#result_temp").innerHTML = "";
+        }
+    </script>
+</body>
+</html>
